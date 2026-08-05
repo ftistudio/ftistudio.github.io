@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 | FTI Studio</title>
+    <style>
+        /* Modern Reset & Base Styles */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif; 
+            background-color: #0b0b0e; 
+            color: #f5f5f7; 
+            text-align: center; 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* Subtle Cyber Background Glow matching home page */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(255, 149, 0, 0.1) 0%, rgba(79, 172, 254, 0) 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Main Container */
+        .error-container {
+            max-width: 500px;
+            background: rgba(19, 19, 22, 0.6);
+            border: 1px solid #222;
+            padding: 40px 30px;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        /* Large Status Code Display */
+        .error-code {
+            font-family: 'SF Mono', Menlo, monospace;
+            font-size: 6rem;
+            font-weight: 800;
+            line-height: 1;
+            background: linear-gradient(135deg, #ff9500 0%, #ff3b30 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        /* Typography */
+        h1 { 
+            font-size: 1.8rem; 
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 24px; 
+            color: #fff;
+        }
+
+        /* High-Tech Return Button */
+        .btn-return { 
+            display: inline-block; 
+            background: linear-gradient(135deg, #0072ff 0%, #00f2fe 100%);
+            color: #000; 
+            padding: 14px 32px; 
+            font-weight: 700; 
+            border-radius: 10px; 
+            text-decoration: none; 
+            font-size: 1rem; 
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .btn-return:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 242, 254, 0.25);
+        }
+
+        .btn-return:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="error-container">
+        <!-- Status Indicator -->
+        <div class="error-code">404</div>
+
+        <!-- Custom Requested Messages -->
+        <h1>Oops! This page doesn't exist (yet...)</h1>
+        
+        <!-- Navigation Link back to index.html -->
+        <a href="https://ftistudio.github.io/" class="btn-return">Return to the Main Page</a>
+    </div>
+
+</body>
+</html>
