@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Feedback - FTI Studio</title>
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        #loading-box {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        #status {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 10px 0;
+        }
+        #status.error { color: #dc2626; }
+        .progress-container {
+            background-color: #e2e8f0;
+            border-radius: 10px;
+            height: 8px;
+            width: 100%;
+            overflow: hidden;
+        }
+        #progress-bar {
+            background-color: #3b82f6;
+            height: 100%;
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+        textarea {
+            width: 100%;
+            height: 110px;
+            padding: 12px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        textarea:focus { outline: none; border-color: #3b82f6; }
+        textarea:disabled { background-color: #f1f5f9; cursor: not-allowed; }
+        #submit-btn {
+            display: block;
+            margin: 12px auto 0;
+            padding: 10px 24px;
+            background-color: #3b82f6;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        #submit-btn:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+        #submit-btn:not(:disabled):hover { background-color: #2563eb; }
+        #submit-status {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            min-height: 20px;
+        }
+        #result-container {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            display: none;
+        }
+        .badge-wrapper { margin-top: 10px; }
+        .sentiment-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+        .POSITIVE { background-color: #dcfce7; border: 1px solid #bbf7d0; }
+        .NEUTRAL { background-color: #f1f5f9; border: 1px solid #e2e8f0; }
+        .NEGATIVE { background-color: #fee2e2; border: 1px solid #fecaca; }
+        #error-banner {
+            display: none;
+            margin-top: 10px;
+            padding: 10px 12px;
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>User Feedback</h1>
+    <div class="subtitle">Submit user feedback here.</div>
+
+    <div id="loading-box">
+        <p id="status">Connecting to CDN...</p>
+        <div class="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+    </div>
+
+    <textarea id="text-input" placeholder="Loading language patterns..." disabled></textarea>
+    <button id="submit-btn" disabled>Submit</button>
+    <div id="submit-status"></div>
+    <div id="error-banner"></div>
+
+    <script type="module">
+        // FIX: don't rely on a single CDN. If one host is blocked, down,
+        // or geo-restricted for the user, automatically fall through to
+        // the next one instead of just failing.
+        const CDN_CANDIDATES = [
+            {
+                name: 'jsDelivr',
+                url: 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/transformers.js',
+                wasmBase: 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/'
+            },
+            {
+                name: 'unpkg',
+                url: 'https://unpkg.com/@huggingface/transformers@3.0.0/dist/transformers.js',
+                wasmBase: 'https://unpkg.com/@huggingface/transformers@3.0.0/dist/'
+            },
+            {
+                name: 'esm.run',
+                url: 'https://esm.run/@huggingface/transformers@3.0.0',
+                wasmBase: 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0/dist/'
+            }
+        ];
+
+        const statusText = document.getElementById('status');
+        const progressBar = document.getElementById('progress-bar');
+        const loadingBox = document.getElementById('loading-box');
+        const textInput = document.getElementById('text-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const submitStatus = document.getElementById('submit-status');
+        const errorBanner = document.getElementById('error-banner');
+
+        // Worker proxies to Discord server-side, so the real webhook URL
+        // never reaches the browser.
+        const WORKER_URL = 'https://small-bird-fa29.lollipopsarecoolmj.workers.dev/';
+
+        async function sendDiscordNotification(userText, inferenceResult) {
+            const message =
+                `**User request:**\n${userText}\n\n` +
+                `**Inference result:** ${inferenceResult.label} (score: ${inferenceResult.score.toFixed(3)})`;
+            const res = await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: message })
+            });
+            if (!res.ok) throw new Error(`Worker returned ${res.status}: ${await res.text()}`);
+        }
+
+        let classifier;
+
+        function showError(message) {
+            errorBanner.textContent = message;
+            errorBanner.style.display = 'block';
+        }
+
+        function clearError() {
+            errorBanner.style.display = 'none';
+            errorBanner.textContent = '';
+        }
+
+        async function loadModuleWithFallback() {
+            const attempts = [];
+            for (const candidate of CDN_CANDIDATES) {
+                try {
+                    statusText.innerText = `Connecting to ${candidate.name}...`;
+                    const module = await import(candidate.url);
+                    return { module, candidate };
+                } catch (err) {
+                    // Keep the raw, unmodified error for each attempt so we
+                    // can show exactly what the browser said if all fail.
+                    attempts.push(`${candidate.name}: ${err.name || 'Error'}: ${err.message || err}`);
+                }
+            }
+            const combined = new Error(attempts.join(' | '));
+            combined.isAllCdnFailure = true;
+            throw combined;
+        }
+
+        async function init() {
+            try {
+                const { module, candidate } = await loadModuleWithFallback();
+                const pipeline = module.pipeline;
+                const env = module.env;
+
+                if (env) {
+                    env.allowLocalModels = false;
+                    // FIX: was forcing a full ~14MB re-download on every page
+                    // load. Browser cache lets repeat visits load instantly.
+                    env.useBrowserCache = true;
+
+                    if (env.backends && env.backends.onnx) {
+                        env.backends.onnx.wasm.proxy = false;
+                        env.backends.onnx.wasm.numThreads = 1;
+                        env.backends.onnx.wasm.wasmPaths = candidate.wasmBase;
+                    }
+                }
+
+                statusText.innerText = `Downloading weights via ${candidate.name} (~14MB, cached after first load)...`;
+
+                classifier = await pipeline('sentiment-analysis', 'Xenova/twitter-roberta-base-sentiment-latest', {
+                    progress_callback: (data) => {
+                        if (data.status === 'progress' && data.total) {
+                            const pct = Math.min(100, Math.round((data.loaded / data.total) * 100));
+                            statusText.innerText = `Downloading Data Layers: ${data.file} (${pct}%)`;
+                            progressBar.style.width = `${pct}%`;
+                        }
+                    }
+                });
+
+                loadingBox.style.display = 'none';
+                textInput.disabled = false;
+                textInput.placeholder = "Type your message here...";
+                submitBtn.disabled = false;
+                textInput.focus();
+            } catch (error) {
+                // FIX: show the browser's actual, unmodified error text
+                // instead of a paraphrased summary, so it's directly
+                // useful for debugging without opening DevTools.
+                console.error(error);
+                statusText.innerText = "Failed to load model.";
+                statusText.classList.add('error');
+                showError(`Raw error: ${error.message || error}`);
+            }
+        }
+
+        // Computes the sentiment result but never renders it — the label
+        // stays server-side (in Discord), not in the page UI.
+        async function computeSentiment(val) {
+            const output = await classifier(val);
+            // FIX: pipeline() returns an array of results, e.g.
+            // [{ label, score }], not a single object.
+            const result = Array.isArray(output) ? output[0] : output;
+            if (!result || typeof result.label !== 'string') {
+                throw new Error('Unexpected model output format');
+            }
+
+            let rawLabel = result.label.toUpperCase();
+            const scorePercentage = result.score * 100;
+
+            let baseStars = 5;
+            if (scorePercentage < 20) {
+                baseStars = 2;
+            } else if (scorePercentage < 50) {
+                baseStars = 3;
+            } else if (scorePercentage < 70) {
+                baseStars = 4;
+            }
+
+            if (rawLabel === 'LABEL_0' || rawLabel === 'NEGATIVE') {
+                if (baseStars > 2) baseStars = 2;
+            } else if (rawLabel === 'LABEL_1' || rawLabel === 'NEUTRAL') {
+                if (baseStars > 3) baseStars = 3;
+                if (baseStars < 2) baseStars = 2;
+            }
+
+            let finalLabel = 'NEUTRAL';
+            if (baseStars <= 2) {
+                finalLabel = 'NEGATIVE';
+            } else if (baseStars <= 3) {
+                finalLabel = 'NEUTRAL';
+            } else {
+                finalLabel = 'POSITIVE';
+            }
+
+            return { label: finalLabel, score: result.score };
+        }
+
+        async function handleSubmit() {
+            const val = textInput.value.trim();
+            if (!val) return;
+            if (!classifier) {
+                showError('Model is still loading — please wait.');
+                return;
+            }
+
+            clearError();
+            submitBtn.disabled = true;
+            submitStatus.textContent = 'Sending...';
+
+            try {
+                const inferenceResult = await computeSentiment(val);
+                await sendDiscordNotification(val, inferenceResult);
+                submitStatus.textContent = 'Submitted — thank you!';
+                textInput.value = '';
+                window.location.href = 'https://ftistudio.github.io';
+            } catch (err) {
+                console.error(err);
+                submitStatus.textContent = '';
+                showError(`Submit failed: ${err.message || err}`);
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        submitBtn.addEventListener('click', handleSubmit);
+
+        init();
+    </script>
+</body>
+</html>
