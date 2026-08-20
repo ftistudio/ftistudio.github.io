@@ -73,15 +73,7 @@
         .disclaimer-title { font-size: 0.85rem; font-weight: 700; color: #e5c158; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
         .disclaimer-text { font-size: 0.85rem; color: #636366; line-height: 1.6; }
     </style>
-        <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW active on scope:', reg.scope))
-                    .catch(err => console.error('SW registration failed:', err));
-            });
-        }
-    </script>
+     <script src="./sw.js"></script>
 </head>
 <body>
 <div class="error-container">
