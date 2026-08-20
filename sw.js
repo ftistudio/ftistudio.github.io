@@ -1,5 +1,5 @@
-const CACHE_NAME = 'offline-cache-v1';
-const OFFLINE_URL = './offline';
+const CACHE_NAME = 'offline-v1';
+const OFFLINE_URL = './offline'; 
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -11,7 +11,16 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) return caches.delete(key);
+        })
+      );
+    })
+  );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
