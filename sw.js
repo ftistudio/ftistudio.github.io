@@ -1,15 +1,25 @@
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open('offline-cache').then((cache) => {
-      return cache.add('/offline');
+const CACHE_NAME = 'offline-cache-v1';
+const OFFLINE_URL = './offline';
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.add(new Request(OFFLINE_URL, { cache: 'reload' }));
     })
   );
+  self.skipWaiting();
 });
 
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    fetch(e.request).catch(() => {
-      return caches.match('/offline');
-    })
-  );
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match(OFFLINE_URL);
+      })
+    );
+  }
 });
