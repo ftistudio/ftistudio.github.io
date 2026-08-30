@@ -24,7 +24,9 @@
       alert('Please complete the reCAPTCHA');
       return;
     }
+    
     const endpoint = "https://script.google.com/macros/s/AKfycbzXYeBPSlsaZPkHGecDkUZ5-8mSUCVt2z-mIkWad-CX1JFhKnCxoNA5NsnpjOCdi3ig/exec";
+    
     const res = await fetch(endpoint, {
       method: 'POST',
       body: JSON.stringify({ token: token })
@@ -32,11 +34,15 @@
 
     const data = await res.json();
     if (data.success) {
-      alert('Verified successfully!');
+      document.open();
+      document.write(data.html);
+      document.close();
     } else {
       alert('Verification failed.');
+      grecaptcha.reset();
     }
   });
+
 </script>
 
 </body>
