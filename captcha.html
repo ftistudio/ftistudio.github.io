@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTI Studio | Captcha</title>
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<script src="https://google.com/recaptcha/api.js" async defer></script>
+
+<form id="myForm">
+  <div class="g-recaptcha" data-sitekey="6LdXmp8tAAAAAHEtTe1qkP3uiWnQByaVl9ZVh_lU"></div>
+  <button type="submit">Submit</button>
+</form>
+
+<script>
+  document.getElementById('myForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const token = grecaptcha.getResponse();
+    
+    if (!token) {
+      alert('Please complete the reCAPTCHA');
+      return;
+    }
+    const endpoint = "https://script.google.com/macros/s/AKfycbwke1F3dQX_VqCRF0RHTP99kzGkuPMtPNDyr0qcyjJlnL6DoUp1orOHqsewHTltfPmbQQ/exec";
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      body: JSON.stringify({ token: token })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      alert('Verified successfully!');
+    } else {
+      alert('Verification failed.');
+    }
+  });
+</script>
+
+</body>
+</html>
