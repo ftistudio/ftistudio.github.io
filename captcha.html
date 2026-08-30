@@ -27,10 +27,14 @@ document.getElementById('myForm').addEventListener('submit', async (e) => {
   
   const endpoint = "https://script.google.com/macros/s/AKfycbzXYeBPSlsaZPkHGecDkUZ5-8mSUCVt2z-mIkWad-CX1JFhKnCxoNA5NsnpjOCdi3ig/exec";
   
+  const payloadData = new URLSearchParams();
+  payloadData.append('token', token);
+  
   try {
     const res = await fetch(endpoint, {
       method: 'POST',
-      body: JSON.stringify({ token: token })
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: payloadData.toString()
     });
 
     const data = await res.json();
@@ -43,11 +47,12 @@ document.getElementById('myForm').addEventListener('submit', async (e) => {
       grecaptcha.reset();
     }
   } catch (err) {
-    console.log("CORS blocked fetch. Running secure fallback detour...");
+    console.log("Network detour block caught. Running direct address fallback...");
     window.location.href = endpoint + "?token=" + token;
   }
 });
 </script>
+
 
 </body>
 </html>
