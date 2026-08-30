@@ -16,17 +16,18 @@
 </form>
 
 <script>
-  document.getElementById('myForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const token = grecaptcha.getResponse();
-    
-    if (!token) {
-      alert('Please complete the reCAPTCHA');
-      return;
-    }
-    
-    const endpoint = "https://script.google.com/macros/s/AKfycbzXYeBPSlsaZPkHGecDkUZ5-8mSUCVt2z-mIkWad-CX1JFhKnCxoNA5NsnpjOCdi3ig/exec";
-    
+document.getElementById('myForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const token = grecaptcha.getResponse();
+  
+  if (!token) {
+    alert('Please complete the reCAPTCHA');
+    return;
+  }
+  
+  const endpoint = "https://script.google.com/macros/s/AKfycbzXYeBPSlsaZPkHGecDkUZ5-8mSUCVt2z-mIkWad-CX1JFhKnCxoNA5NsnpjOCdi3ig/exec";
+  
+  try {
     const res = await fetch(endpoint, {
       method: 'POST',
       body: JSON.stringify({ token: token })
@@ -41,8 +42,11 @@
       alert('Verification failed.');
       grecaptcha.reset();
     }
-  });
-
+  } catch (err) {
+    console.log("CORS blocked fetch. Running secure fallback detour...");
+    window.location.href = endpoint + "?token=" + token;
+  }
+});
 </script>
 
 </body>
