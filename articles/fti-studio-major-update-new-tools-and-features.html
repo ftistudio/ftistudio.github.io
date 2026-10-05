@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTI Studio Major Update: New Tools and Features - FTI Studio</title>
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+<h1>FTI Studio Major Update: New Tools and Features</h1>
+<p><strong>FTI Studio</strong></p>
+<p>October 5th, 2026</p>
+<p><strong>FTI Studio</strong> just received its <strong>biggest update yet</strong>. What started as a focused Windows image editor built around the <em>.fti</em> format has grown into a noticeably more capable tool without losing the lightweight feel that defined it from the beginning.</p>
+<p>A quick reminder of what <strong>FTI Studio</strong> actually is: it is a <strong>native Windows-only image editor with transparency included</strong>. The name <em>Flat Transparency Image</em> (<em>.fti</em>) simply means a straightforward 2D image format that stores a <strong>full alpha channel</strong>. It is <em>not</em> a specialized transparency editor, nor does it rely on any transparency threshold or matte system. It is an ordinary image editor that happens to handle real transparency cleanly and uses its own compact format designed for that purpose.</p>
+<p>The <strong>latest release</strong> significantly expands what you can do inside that editor.</p>
+<h3 id="file-handling-improvements">File Handling Improvements</h3>
+<p>Previously, opening a PNG required a separate path from opening an <em>.fti</em> file. The update <strong>unifies</strong> this. From the <strong>File</strong> menu you can now open both <em>.fti</em> and <em>.png</em> files in a single dialog. PNGs are imported and converted into the editor’s internal 32-bit format so you can start working immediately. Saving still happens exclusively as <em>.fti</em>, keeping the workflow focused.</p>
+<p>File association for <em>.fti</em> remains in place, so <strong>double-clicking</strong> an <em>.fti</em> file continues to launch the editor directly.</p>
+<h3 id="new-drawing-and-editing-tools">New Editing Tools</h3>
+<p>The toolset has expanded in practical ways:</p>
+<ul>
+<li><p><strong>Pen</strong>, <strong>Color picker</strong>, <strong>Size</strong>, and <strong>Eraser</strong> still form the core painting tools, with adjustable size and proper anti-aliasing.</p>
+</li>
+<li><p><strong>Eyedropper</strong> lets you sample any color on the canvas. Transparent pixels are detected and reported in the status bar. After sampling, the tool automatically switches back to the pen.</p>
+</li>
+<li><p><strong>Text tool</strong> adds <em>live text editing</em>. Click on the canvas, type, and resize the text box as you go. <em>Shift+Enter</em> inserts a line break; <em>Enter</em> or <em>Escape</em> commits the text. Font size is controlled by the same size slider used for the brush.</p>
+</li>
+<li><p><strong>Selection tool</strong> supports rectangular selections with visible handles. You can <em>select all with Ctrl+A</em>, <em>delete the selection with Escape or Backspace</em>, <em>deselect by clicking off or switching tools</em>, or use it as a target area for pasting.</p>
+</li>
+</ul>
+<p>These additions turn the editor from a pure paint-and-save utility into something closer to a <strong>lightweight daily image tool</strong>.</p>
+<h3 id="copy-paste-and-clipboard-behavior">Copy, Paste, and Clipboard Behavior</h3>
+<p>Clipboard support is one of the more <em>thoughtful</em> parts of the update. <strong>Copy</strong> works on the current selection or the entire image. <strong>Paste</strong> is smart:</p>
+<ul>
+<li><p>If the clipboard contains <em>text</em>, the editor switches to the <strong>Text tool</strong> and places an editable text box at the last mouse position.</p>
+</li>
+<li><p>If the clipboard contains an <em>image</em>, the image is pasted. External images (from other applications) are forced to full opacity so they <em>replace</em> rather than blend with whatever is underneath. Internal copies from within FTI Studio can preserve transparency if desired.</p>
+</li>
+</ul>
+<p>This dual behavior keeps text and image pasting predictable without requiring extra menu commands.</p>
+<h3 id="undo-redo-and-keyboard-shortcuts">Undo, Redo, and Keyboard Shortcuts</h3>
+<p>A <strong>40-level undo/redo stack</strong> is now available (<em>Ctrl+Z</em> / <em>Ctrl+Y</em>). The history is cleared when a new file is opened or a blank canvas is created, which keeps memory use reasonable.</p>
+<p>Keyboard shortcuts cover the main actions:</p>
+<ul>
+<li><p><em>Ctrl+C</em> / <em>Ctrl+V</em> for copy and paste</p>
+</li>
+<li><p><em>Ctrl+A</em> for select all</p>
+</li>
+<li><p><em>Delete</em> or <em>Backspace</em> to delete a selection</p>
+</li>
+<li><p><em>Escape</em> or <em>Enter</em> to add text</p>
+</li>
+</ul>
+<p>While the text box is active, the usual text-editing shortcuts continue to work and the global image shortcuts are correctly suppressed.</p>
+<h3 id="interface-and-polish">Interface and Polish</h3>
+<p>The <strong>dark theme</strong> remains consistent across menus, toolbox, status bar, and dialogs. The canvas still sits on a <em>checkerboard background</em> so transparent areas are easy to see. The status bar shows coordinates and, when the eyedropper is active, the exact RGB and alpha values under the cursor.</p>
+<p>Canvas size can be changed through a simple dialog (with a soft warning above 8000 pixels on either side). Help menus explain both the <em>.fti</em> format and the full shortcut list.</p>
+<h3 id="what-stayed-the-same">What Stayed the Same</h3>
+<p>The core philosophy did <strong>not</strong> change. <strong>FTI Studio</strong> is still free, still Windows-only, still focused on a single simple format, and still free of layers, vectors, or complex project files. The <em>.fti</em> format itself remains a clean container: a four-byte magic header (“<em>FTI1</em>”), width and height, a compressed length, and Deflate-compressed raw 32-bit ARGB pixel data.</p>
+<p>The update simply makes the editor more usable for everyday tasks while staying true to that original design.</p>
+<h3 id="who-this-update-helps">Who This Update Helps</h3>
+<p>Anyone who already used <strong>FTI Studio</strong> for image work will notice the difference immediately. The addition of <em>text</em>, <em>eyedropper</em>, proper <em>selection</em>, and reliable <em>clipboard support</em> removes several of the previous friction points. New users who need a lightweight Windows image editor that handles transparency cleanly now have a more complete tool without having to learn a large suite.</p>
+<p>The official download remains <a href="https://ftistudio.github.io/download">here</a>. Because the application is free and closed-source, the update is straightforward to try.</p>
+<p>In short, the latest version of <strong>FTI Studio</strong> keeps the same identity—a <strong>native Windows image editor with transparency included</strong>—while delivering a set of practical improvements that make it noticeably more useful <em>day to day</em>.</p>
+</body>
+</html>
