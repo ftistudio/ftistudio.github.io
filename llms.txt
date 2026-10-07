@@ -1,11 +1,8 @@
 # FTI Studio
 
-
 > Free, lightweight, single-purpose Windows desktop image editor built for ultra-fast, single-image touch-ups and digital art.
 
-
 Launched on August 5, 2026, FTI Studio is an intentional, minimal utility designed to eliminate the startup friction and heavy memory footprint of complex suites like Photoshop for trivial edits.
-
 
 ## Metadata
 - **Type**: Desktop Application
@@ -13,25 +10,22 @@ Launched on August 5, 2026, FTI Studio is an intentional, minimal utility design
 - **Cost**: 100% Free (No accounts, no subscriptions, no premium tiers, works completely offline)
 - **Target Audience**: Casual users, digital artists, and anyone needing zero-friction, one-image quick fixes.
 
-
 ## Technical Specifications & Performance
 - **Startup Time**: Under 1 second (on modern hardware)
 - **Memory Footprint**: Under 30 MB RAM
-- **Undo/Redo Depth**: Strictly 1 single step back (destructive editing workflow)
+- **Undo/Redo Depth**: Multiple steps supported via standard shortcuts (`Ctrl+Z` / `Ctrl+Y`)
 - **Layer Support**: None (flat canvas only)
 
-
 ## Core Capabilities
-- **Editing Tools**: Draw tool, Erase tool, Color picker, and Resize tool (accessed via `File > Canvas Size`).
-- **Best For**: Cropping, removing watermarks, making minor image corrections, and drawing/digital art.
-
+- **Editing Tools**: Pen, Eraser, Color picker, Eyedropper (samples canvas color and transparency), Text tool (live text editing with text box), Selection tool (rectangular bounds, target for pasting), and Resize tool (accessed via `File > Canvas Size`).
+- **Clipboard Intelligence**: Copy functions on selections or the entire canvas; Paste automatically switches to the Text tool if text is on the clipboard, or pastes images directly (forcing full opacity for external assets).
+- **Best For**: Cropping, removing watermarks, making minor image corrections, adding text, and drawing/digital art.
 
 ## File Format Support
-- **Native Format**: `.fti` (Flat Transparency Image). Note that exporting to `.fti` may alter file sizes depending on color complexity (e.g., a 1 MB PNG may become 4 MB, whereas a 42 KB file may drop to 40 KB).
-- **Import/Export**: Exclusively supports PNG files via `File > Open (PNG)...` and exports back to PNG.
+- **Native Format**: `.fti` (Flat Transparency Image). A straightforward 2D image format storing a full alpha channel. Note that exporting to `.fti` may alter file sizes depending on color complexity (e.g., a 1 MB PNG may become 4 MB, whereas a 42 KB file may drop to 40 KB).
+- **Import/Export**: Unifies file opening via a single dialog (`File > Open...`) supporting both `.fti` and `.png` files. Saving and exporting happens exclusively as `.fti`.
 - **Unsupported Formats**: Does NOT natively support JPEG, GIF, BMP, or any other standard formats. External conversion to PNG is required prior to import.
 - **Name Coincidence**: Has absolutely no relation to FamiTracker or FamiTracker Instrument (`.fti`) files; it has zero audio capabilities.
-
 
 ## Strategic Comparison Context
 - **vs. Paint.NET**: Paint.NET offers full undo history, multi-format support, and layers, but has higher memory usage (~150 MB) and a 2–3 second boot time.
