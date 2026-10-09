@@ -1,649 +1,260 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Browser Port - FTI Studio</title>
-<link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Untitled - FTI Studio Browser Port</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --window-bg:   #1e1e1e;
-    --panel-bg:    #252526;
-    --control-bg:  #2d2d30;
-    --border:      #3f3f46;
-    --text:        #dcdcdc;
-    --accent:      #007acc;
-    --canvas-bg:   #141414;
-  }
-  body {
-    background: var(--window-bg);
-    color: var(--text);
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    font-size: 13px;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
-    user-select: none;
-  }
-
-  /* MENU BAR */
-  #menu-bar {
-    background: var(--panel-bg);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: stretch;
-    height: 24px;
-    flex-shrink: 0;
-    position: relative;
-    z-index: 1000;
-  }
-  .menu-item {
-    position: relative;
-    display: flex;
-    align-items: center;
-    padding: 0 10px;
-    cursor: default;
-    color: var(--text);
-    font-size: 13px;
-  }
-  .menu-item:hover, .menu-item.open { background: var(--accent); color: #fff; }
-  .dropdown {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background: var(--panel-bg);
-    border: 1px solid var(--border);
-    min-width: 170px;
-    z-index: 2000;
-    box-shadow: 2px 4px 14px rgba(0,0,0,.65);
-  }
-  .menu-item.open .dropdown { display: block; }
-  .dd-item {
-    padding: 5px 16px;
-    cursor: default;
-    color: var(--text);
-    white-space: nowrap;
-  }
-  .dd-item:hover { background: var(--accent); color: #fff; }
-  .dd-item.disabled { opacity: .38; pointer-events: none; }
-  .dd-sep { border-top: 1px solid var(--border); margin: 3px 0; }
-
-  /* BODY ROW */
-  #body-row { display: flex; flex: 1; overflow: hidden; }
-
-  /* TOOLBOX */
-  #toolbox {
-    width: 160px;
-    flex-shrink: 0;
-    background: var(--panel-bg);
-    border-right: 1px solid var(--border);
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    overflow-y: auto;
-  }
-  .tb-label {
-    font-size: 11px;
-    letter-spacing: .08em;
-    color: var(--text);
-    margin-bottom: 2px;
-    font-weight: normal;  /* removed bold */
-  }
-  .tb-label.mt { margin-top: 10px; }
-  .tb-btn {
-    width: 100%;
-    height: 36px;
-    background: var(--control-bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 13px;
-    margin-bottom: 4px;
-  }
-  .tb-btn:hover { background: #3a3a3e; }
-  .tb-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .num-row { display: flex; gap: 2px; }
-  .num-row input {
-    flex: 1;
-    height: 28px;
-    background: var(--control-bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: inherit;
-    font-size: 13px;
-    padding: 0 6px;
-    min-width: 0;
-  }
-  .num-row input:focus { outline: 1px solid var(--accent); }
-  .spin-col { display: flex; flex-direction: column; }
-  .spin-col button {
-    width: 20px; height: 14px;
-    line-height: 1; font-size: 9px;
-    background: var(--control-bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    cursor: pointer; padding: 0;
-  }
-  .spin-col button:hover { background: #3a3a3e; }
-  #color-btn {
-    width: 100%; height: 36px;
-    border: 1px solid var(--border);
-    cursor: pointer;
-    font-family: inherit; font-size: 12px; font-weight: normal; /* removed bold */
-  }
-  #what-fti-btn {
-    width: 100%; height: 40px;
-    margin-top: 20px;
-    background: var(--control-bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    cursor: pointer;
-    font-family: inherit; font-size: 13px;
-  }
-  #what-fti-btn:hover { background: #3a3a3e; }
-
-  /* CANVAS HOST */
-  #canvas-host {
-    flex: 1;
-    background: var(--canvas-bg);
-    overflow: auto;
-    position: relative;
-  }
-  #canvas-wrap {
-    position: absolute;
-    left: 20px; top: 20px;
-  }
-  #canvas-wrap::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(45deg,#3c3c3c 25%,transparent 25%),
-      linear-gradient(-45deg,#3c3c3c 25%,transparent 25%),
-      linear-gradient(45deg,transparent 75%,#3c3c3c 75%),
-      linear-gradient(-45deg,transparent 75%,#3c3c3c 75%);
-    background-size: 24px 24px;
-    background-position: 0 0,0 12px,12px -12px,-12px 0;
-    background-color: #2d2d2d;
-    z-index: 0;
-  }
-  #canvas-wrap::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border: 1px solid #ffffff;
-    pointer-events: none;
-    z-index: 2;
-  }
-  #main-canvas {
-    display: block;
-    position: relative;
-    z-index: 1;
-    cursor: crosshair;
-  }
-
-  /* STATUS BAR */
-  #status-bar {
-    background: var(--panel-bg);
-    border-top: 1px solid var(--border);
-    height: 22px;
-    display: flex;
-    align-items: center;
-    padding: 0 8px;
-    gap: 16px;
-    flex-shrink: 0;
-    font-size: 12px;
-    color: var(--text);
-  }
-  #status-spring { flex: 1; }
-
-  /* OVERLAY / MODALS */
-  #overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.55);
-    z-index: 5000;
-    align-items: center;
-    justify-content: center;
-  }
-  #overlay.show { display: flex; }
-  .modal {
-    background: var(--window-bg);
-    border: 1px solid var(--border);
-    box-shadow: 0 8px 32px rgba(0,0,0,.7);
-    color: var(--text);
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    font-size: 13px;
-  }
-  .modal-title {
-    background: var(--panel-bg);
-    border-bottom: 1px solid var(--border);
-    padding: 6px 14px;
-    font-weight: normal; /* removed bold */
-  }
-  .modal-body { padding: 16px; }
-  .modal-footer {
-    padding: 10px 16px;
-    border-top: 1px solid var(--border);
-    display: flex; gap: 8px; justify-content: flex-end;
-  }
-  .m-btn {
-    padding: 5px 18px; height: 30px;
-    background: var(--control-bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: inherit; font-size: 13px; cursor: pointer;
-  }
-  .m-btn:hover { background: #3a3a3e; }
-  .m-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .m-btn.primary:hover { background: #1884cc; }
-  .form-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .form-row label { width: 90px; flex-shrink: 0; }
-  .form-row input[type=number] {
-    width: 120px; height: 26px;
-    background: var(--control-bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: inherit; font-size: 13px; padding: 0 6px;
-  }
-  .form-row input[type=number]:focus { outline: 1px solid var(--accent); }
-  .fti-info { font-size: 13px; line-height: 1.75; }
-</style>
-</head>
-<body>
-
-<!-- MENU BAR -->
-<div id="menu-bar">
-  <div class="menu-item" id="menu-help">Help
-    <div class="dropdown">
-      <div class="dd-item" id="dd-what-fti">What is .FTI?</div>
-    </div>
+:root{--w:#1e1e1e;--p:#252526;--c:#2d2d30;--b:#3f3f46;--t:#dcdcdc;--a:#007acc}
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none}
+input,textarea{-webkit-user-select:text;user-select:text}
+html,body{margin:0;height:100%;background:var(--w);color:var(--t);font:12px "Segoe UI",Tahoma,sans-serif;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100%}
+#menu{background:var(--p);display:flex;color:#fff;user-select:none}
+.mi{padding:6px 10px;position:relative;cursor:default}
+.mi.open,.mi:hover{background:var(--a)}
+.dd{display:none;position:absolute;left:0;top:100%;background:var(--p);border:1px solid var(--b);min-width:210px;z-index:50;color:#fff}
+.open>.dd{display:block}
+.dd div{padding:6px 14px;display:flex;justify-content:space-between;gap:24px;white-space:nowrap}
+.dd div:hover{background:var(--a)}
+.dd .off{opacity:.4;pointer-events:none}
+.dd hr{border:0;border-top:1px solid var(--b);margin:3px 0}
+#main{flex:1;display:flex;min-height:0}
+#tools{width:160px;background:var(--p);padding:10px;overflow:auto}
+#tools h6{margin:0 0 4px;font-size:11px}
+#tools button.t{display:block;width:100%;height:36px;margin-bottom:4px;background:var(--c);color:var(--t);border:1px solid var(--b);font:inherit}
+#tools button.t.on{background:var(--a);color:#fff}
+#tools label{display:block;margin:10px 0 4px}
+#tools input{width:100%;background:var(--c);color:var(--t);border:1px solid var(--b);padding:3px;font:inherit}
+#colorBtn{display:block;width:100%;height:36px;border:1px solid var(--b);background:#fff;color:#000;font:inherit}
+#host{flex:1;overflow:auto;background:#000;position:relative}
+#wrap{position:relative;width:max-content;height:max-content;outline:1px solid #fff;outline-offset:0;
+background:conic-gradient(#3c3c3c 25%,#2d2d2d 0 50%,#3c3c3c 0 75%,#2d2d2d 0) 0 0/24px 24px}
+#cv{display:block;touch-action:none}
+#sel{position:absolute;z-index:90000;border:1px dashed var(--a);pointer-events:none;display:none}
+#sel i{position:absolute;width:6px;height:6px;background:var(--a)}
+#ta{position:absolute;z-index:90000;display:none;background:#141414;border:0;outline:1px dashed var(--a);outline-offset:2px;padding:0;margin:0;resize:none;overflow:hidden;white-space:pre;font-family:Arial}
+#status{background:var(--p);display:flex;gap:18px;padding:3px 10px}
+#status span:first-child{flex:1}
+.ov{position:fixed;inset:0;background:#0006;display:flex;align-items:center;justify-content:center;z-index:100}
+.dlg{background:var(--w);border:1px solid var(--b);padding:16px;min-width:320px;max-width:90vw;line-height:1.6}
+.dlg h3{margin:0 0 10px;font-size:13px}
+.dlg pre{font:inherit;margin:0 0 12px;white-space:pre-wrap}
+.dlg button,.dlg input{background:var(--c);color:var(--t);border:1px solid var(--b);padding:6px 14px;font:inherit}
+.dlg input{width:120px;padding:3px}
+/* Windows-style colour dialog */
+.cd{transform-origin:center;background:#f0f0f0;color:#000;border:1px solid #888;padding:10px;display:flex;gap:10px;font:12px "Segoe UI",Tahoma,sans-serif;user-select:none}
+.cd button{background:#e1e1e1;border:1px solid #adadad;color:#000;height:23px;font:inherit}
+.cd button:hover:not(:disabled){background:#e5f1fb;border-color:#0078d7}
+.cd button:disabled{color:#838383;background:#ccc;border-color:#bfbfbf}
+.cd .l{width:210px;display:flex;flex-direction:column}.cd .r{width:268px;display:flex;flex-direction:column;gap:8px}
+.grid{display:grid;grid-template-columns:repeat(8,24px);gap:2px 2px;margin:4px 0}
+.grid b{width:24px;height:22px;border:1px solid #fff;outline:1px solid #7a7a7a;outline-offset:-2px;border-color:#808080 #fff #fff #808080;display:block}
+.grid b.s{outline:1px dotted #000;outline-offset:1px}
+.grid.c b:not(.f){background:#fff}
+.sp{position:relative;width:268px;height:198px;display:flex;gap:6px;align-items:flex-start}
+#sc{cursor:none;border:1px solid #888}
+#lc{width:16px;height:198px;border:1px solid #888;cursor:pointer;flex:none}
+#ar{position:absolute;left:255px;width:0;height:0;border:7px solid transparent;border-right:9px solid #000;border-left:0;margin-top:-7px}
+#cx{position:absolute;width:15px;height:15px;margin:-7px 0 0 -7px;pointer-events:none}
+#cx:before,#cx:after{content:"";position:absolute;background:#000}
+#cx:before{left:7px;top:0;width:1px;height:15px}#cx:after{top:7px;left:0;height:1px;width:15px}
+.cd .in{display:grid;grid-template-columns:auto 42px auto 42px;gap:6px 6px;align-items:center;justify-content:end}
+.cd .in input{width:42px;min-width:0;height:22px;border:1px solid #7a7a7a;text-align:right;padding:0 3px;background:#fff;color:#000;font:inherit}
+.cd .pv{width:78px;height:62px;border:1px solid #888;margin-top:6px}
+.cd .rw{display:flex;gap:8px}.cd .rw button{width:80px}
+</style></head><body>
+<div id="app">
+ <div id="menu"></div>
+ <div id="main">
+  <div id="tools">
+   <h6>TOOLS</h6>
+   <button class="t" data-t="pen">Pen</button><button class="t" data-t="eraser">Eraser</button>
+   <button class="t" data-t="text">Text</button><button class="t" data-t="select">Select</button>
+   <button class="t" data-t="eyedropper">Eyedropper</button>
+   <div id="sizeBox"><label>Size</label><input id="size" type="number" min="1" max="200" value="4"></div>
+   <div id="colorBox"><label>Color</label><button id="colorBtn">Pick Color...</button></div>
   </div>
+  <div id="host"><div id="wrap"><canvas id="cv" width="800" height="600"></canvas><div id="sel"><i style="left:-4px;top:-4px"></i><i style="right:-4px;top:-4px"></i><i style="left:-4px;bottom:-4px"></i><i style="right:-4px;bottom:-4px"></i></div><textarea id="ta" spellcheck="false"></textarea></div></div>
+ </div>
+ <div id="status"><span id="sFile">Untitled</span><span id="sSize"></span><span id="sPos">Position: -, -</span></div>
 </div>
-
-<!-- BODY ROW -->
-<div id="body-row">
-
-  <!-- TOOLBOX -->
-  <div id="toolbox">
-    <div class="tb-label">TOOLS</div>
-    <button class="tb-btn active" id="btn-pen">Pen</button>
-    <button class="tb-btn" id="btn-eraser">Eraser</button>
-    <div class="tb-label mt">Brush Size</div>
-    <div class="num-row">
-      <input type="number" id="brush-size" min="1" max="25" value="4">
-      <div class="spin-col">
-        <button id="spin-up">▲</button>
-        <button id="spin-dn">▼</button>
-      </div>
-    </div>
-    <div class="tb-label mt">Color</div>
-    <button id="color-btn" style="background:#ffffff;color:#000000">Pick Color...</button>
-    <input type="color" id="color-input" value="#ffffff" style="display:none">
-    <button id="what-fti-btn">What is .FTI?</button>
-  </div>
-
-  <!-- CANVAS AREA -->
-  <div id="canvas-host">
-    <div id="canvas-wrap">
-      <canvas id="main-canvas"></canvas>
-    </div>
-  </div>
-
-</div>
-
-<!-- STATUS BAR -->
-<div id="status-bar">
-  <span id="status-file">Browser Port</span>
-  <span id="status-spring"></span>
-  <span id="status-size"></span>
-  <span id="status-pos">Position: -, -</span>
-</div>
-
-<!-- MODAL OVERLAY -->
-<div id="overlay">
-  <!-- Canvas Size -->
-  <div class="modal" id="modal-canvas-size" style="width:310px;display:none">
-    <div class="modal-title">Canvas Size</div>
-    <div class="modal-body">
-      <div class="form-row">
-        <label>Width (px)</label>
-        <input type="number" id="cs-width" min="1" max="100000" value="800">
-      </div>
-      <div class="form-row" style="margin-bottom:0">
-        <label>Height (px)</label>
-        <input type="number" id="cs-height" min="1" max="100000" value="600">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="m-btn" id="cs-cancel">Cancel</button>
-      <button class="m-btn primary" id="cs-apply">Apply</button>
-    </div>
-  </div>
-
-  <!-- What is FTI -->
-  <div class="modal" id="modal-fti-info" style="width:480px;display:none">
-    <div class="modal-title">What is .FTI?</div>
-    <div class="modal-body">
-      <p class="fti-info">
-        FTI stands for Flat Transparency Image.<br><br>
-        Flat – it's a plain 2D image format, no layers or vector data.<br>
-        Transparency – it stores a full alpha channel, so parts of the image can be see-through.<br>
-        Image – it's an image format, holding pixel data.<br><br>
-        Like JFIF, an .FTI file is small and simple, but unlike JFIF it keeps a real transparent background instead of a solid one.<br><br>
-        For a file menu and more features, <a href="https://github.com/ftistudio/ftistudio.github.io/releases/download/v1.0.0/FTIStudioSetup.exe">download FTI Studio</a>.
-      </p>
-    </div>
-    <div class="modal-footer">
-      <button class="m-btn primary" id="fti-close">Close</button>
-    </div>
-  </div>
-
-  <!-- Alert -->
-  <div class="modal" id="modal-alert" style="width:380px;display:none">
-    <div class="modal-title" id="alert-title">FTI Studio</div>
-    <div class="modal-body"><p id="alert-msg" style="line-height:1.6;white-space:pre-wrap"></p></div>
-    <div class="modal-footer"><button class="m-btn primary" id="alert-ok">OK</button></div>
-  </div>
-</div>
-
-<!-- Hidden file inputs -->
-<input type="file" id="open-png-input" accept=".png" style="display:none">
-
+<input type="file" id="file" accept=".fti,.png" hidden>
 <script>
-'use strict';
+const $=s=>document.querySelector(s),cv=$('#cv'),ctx=cv.getContext('2d',{willReadFrequently:true}),ta=$('#ta'),selEl=$('#sel');
+let tool='pen',color='#ffffff',size=4,drawing=false,last,sel=null,selecting=false,s0,undoS=[],redoS=[],typing=false,tPt,mouse={x:20,y:20},
+    name='',fh=null,isFti=false,customCols=[];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
-// ── State ──────────────────────────────────────────────────────────────────
-let activeTool     = 'pen';
-let brushColor     = '#ffffff';
-let brushSize      = 4;
-let isDrawing      = false;
-let lastX = 0, lastY = 0;
-let editCanvas     = null;
-let editCtx        = null;
-let currentFtiPath = null;
+/* ---------- menu ---------- */
+const MENUS={File:[['Open...',openDlg],['-'],['Canvas Size...',sizeDlg],['-'],['Save',()=>saveFti(false),'','save'],['Save As...',()=>saveFti(true)]],
+ Edit:[['Undo',undo,'Ctrl+Z','undo'],['Redo',redo,'Ctrl+Y','redo'],['-'],['Copy',copySel,'Ctrl+C'],['Paste',menuPaste,'Ctrl+V'],['-'],['Select All',selectAll,'Ctrl+A'],['Delete Selection',delSel,'Delete']],
+ Help:[['What is .FTI?',()=>info('What is .FTI?','FTI stands for Flat Transparency Image.\n\nFlat  - a plain 2D image format, no layers or vector data.\nTransparency  - stores a full alpha channel, so parts of the image can be see-through.\nImage  - an image format, holding pixel data.\n\nLike JFIF, an .FTI file is small and simple, but unlike JFIF it keeps a real transparent background instead of a solid one.')],
+  ['Shortcuts',()=>info('Shortcuts','Ctrl + Z    Undo\nCtrl + Y    Redo\nCtrl + C    Copy (selection or whole image)\nCtrl + V    Paste (text -> Text tool; image -> pastes)\nCtrl + A    Select All (image)\nDelete / Backspace   Delete Selection\n\nWhile typing text in the Text tool:\nCtrl + C / V / A   Copy / Paste / Select all text\nEsc or Enter       Commit text\nShift+Enter        Insert line break\nClick away         Commit text')]]};
+const items={};
+(function(){const m=$('#menu');for(const k in MENUS){const d=document.createElement('div');d.className='mi';d.innerHTML=k+'<div class="dd"></div>';const dd=d.lastChild;
+ MENUS[k].forEach(([l,f,sc,id])=>{if(l=='-'){dd.append(document.createElement('hr'));return}const r=document.createElement('div');r.innerHTML=`<span>${l}</span><span>${sc||''}</span>`;
+  r.onclick=e=>{e.stopPropagation();m.querySelectorAll('.open').forEach(x=>x.classList.remove('open'));f()};if(id)items[id]=r;dd.append(r)});
+ d.onclick=e=>{const o=d.classList.contains('open');m.querySelectorAll('.open').forEach(x=>x.classList.remove('open'));if(!o)d.classList.add('open')};m.append(d)}
+ document.addEventListener('click',e=>{if(!e.target.closest('.mi'))m.querySelectorAll('.open').forEach(x=>x.classList.remove('open'))});
+ items.save.style.display='none';menuState()})();
+function menuState(){items.undo.classList.toggle('off',!undoS.length);items.redo.classList.toggle('off',!redoS.length)}
 
-// ── DOM ────────────────────────────────────────────────────────────────────
-const mainCanvas  = document.getElementById('main-canvas');
-const ctx         = mainCanvas.getContext('2d');
-const canvasWrap  = document.getElementById('canvas-wrap');
-const canvasHost  = document.getElementById('canvas-host');
-const statusFile  = document.getElementById('status-file');
-const statusSize  = document.getElementById('status-size');
-const statusPos   = document.getElementById('status-pos');
-const btnPen      = document.getElementById('btn-pen');
-const btnEraser   = document.getElementById('btn-eraser');
-const brushSizeEl = document.getElementById('brush-size');
-const colorBtn    = document.getElementById('color-btn');
-const colorInput  = document.getElementById('color-input');
-const overlay     = document.getElementById('overlay');
+/* ---------- tools ---------- */
+function selectTool(t){if(typing&&t!='text')commitText();if(tool=='select'&&t!='select')clearSel();tool=t;uiTools()}
+function uiTools(){document.querySelectorAll('button.t').forEach(b=>b.classList.toggle('on',b.dataset.t==tool));
+ $('#sizeBox').style.display=['pen','eraser','text'].includes(tool)?'':'none';
+ $('#colorBox').style.display=['pen','text','eyedropper'].includes(tool)?'':'none'}
+document.querySelectorAll('button.t').forEach(b=>b.onclick=()=>selectTool(b.dataset.t));
+$('#size').onkeydown=e=>{if(e.key=='Enter'&&parseInt(e.target.value)>200){e.target.value=200;e.target.oninput(e)}};
+$('#size').oninput=e=>{size=clamp(parseInt(e.target.value)||1,1,200);if(typing){ta.style.fontSize=size+'px';ta.style.lineHeight=size*1.15+'px';fitTa()}};
+$('#colorBtn').onclick=()=>colorDialog(color,c=>{setColor(c);if(typing)ta.style.color=c});
+function setColor(c){color=c;$('#colorBtn').style.background=c;const n=parseInt(c.slice(1),16);$('#colorBtn').style.color=((n>>16&255)*.3+(n>>8&255)*.59+(n&255)*.11)>140?'#000':'#fff'}
 
-// ── Menus ──────────────────────────────────────────────────────────────────
-document.querySelectorAll('.menu-item').forEach(item => {
-  item.addEventListener('click', e => {
-    const wasOpen = item.classList.contains('open');
-    closeMenus();
-    if (!wasOpen) item.classList.add('open');
-    e.stopPropagation();
-  });
-});
-document.addEventListener('click', closeMenus);
-function closeMenus() {
-  document.querySelectorAll('.menu-item.open').forEach(m => m.classList.remove('open'));
-}
+/* ---------- undo / redo ---------- */
+const snap=()=>ctx.getImageData(0,0,cv.width,cv.height);
+function restore(d){cv.width=d.width;cv.height=d.height;ctx.putImageData(d,0,0);status()}
+function pushUndo(){undoS.push(snap());if(undoS.length>40)undoS.shift();redoS=[];menuState()}
+function undo(){if(typing)commitText();if(!undoS.length)return;redoS.push(snap());restore(undoS.pop());menuState()}
+function redo(){if(typing)commitText();if(!redoS.length)return;undoS.push(snap());restore(redoS.pop());menuState()}
 
-// Only Help menu remains
-document.getElementById('dd-what-fti').addEventListener('click', () => { closeMenus(); showWhatIsFti(); });
-document.getElementById('what-fti-btn').addEventListener('click', () => showWhatIsFti());
+/* ---------- canvas input ---------- */
+const pos=e=>{const r=cv.getBoundingClientRect();return{x:Math.round(e.clientX-r.left),y:Math.round(e.clientY-r.top)}};
+function stroke(a,b){ctx.save();const er=tool=='eraser';ctx.globalCompositeOperation=er?'destination-out':'source-over';
+ ctx.strokeStyle=ctx.fillStyle=er?'#000':color;ctx.lineWidth=size;ctx.lineCap='round';
+ if(a.x==b.x&&a.y==b.y){ctx.beginPath();ctx.arc(a.x,a.y,size/2,0,7);ctx.fill()}else{ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}ctx.restore()}
+cv.onpointerdown=e=>{if(e.button!==0)return;const p=pos(e);mouse=p;
+ if(tool=='eyedropper'){const d=ctx.getImageData(clamp(p.x,0,cv.width-1),clamp(p.y,0,cv.height-1),1,1).data;
+  if(!d[3]){$('#sPos').textContent=`Position: ${p.x}, ${p.y} (transparent)`;return}
+  setColor('#'+[d[0],d[1],d[2]].map(v=>v.toString(16).padStart(2,'0')).join(''));selectTool('pen');return}
+ if(tool=='text'){if(typing)commitText();beginText(p);e.preventDefault();return}
+ cv.setPointerCapture(e.pointerId);
+ if(tool=='select'){if(sel&&!inRect(p,sel))clearSel();selecting=true;s0=p;sel={x:p.x,y:p.y,w:0,h:0};drawSel();hasSel=false}
+ else{pushUndo();drawing=true;last=p;stroke(p,p)}};
+let hasSel=false;
+const inRect=(p,r)=>p.x>=r.x&&p.x<=r.x+r.w&&p.y>=r.y&&p.y<=r.y+r.h;
+cv.onpointermove=e=>{const p=pos(e);mouse=p;const px=clamp(p.x,0,cv.width-1),py=clamp(p.y,0,cv.height-1);
+ if(tool=='eyedropper'){const d=ctx.getImageData(px,py,1,1).data;$('#sPos').textContent=`Position: ${p.x}, ${p.y}  RGB(${d[0]},${d[1]},${d[2]}) A:${d[3]}`}else $('#sPos').textContent=`Position: ${p.x}, ${p.y}`;
+ if(selecting){const c={x:clamp(p.x,0,cv.width),y:clamp(p.y,0,cv.height)};sel={x:Math.min(s0.x,c.x),y:Math.min(s0.y,c.y),w:Math.abs(c.x-s0.x),h:Math.abs(c.y-s0.y)};drawSel()}
+ else if(drawing){stroke(last,p);last=p}};
+cv.onpointerup=()=>{if(selecting){selecting=false;if(sel.w>0&&sel.h>0)hasSel=true;else clearSel()}drawing=false};
+cv.onpointerleave=()=>{if(!drawing&&!selecting)$('#sPos').textContent='Position: -, -'};
+function drawSel(){if(!sel){selEl.style.display='none';return}Object.assign(selEl.style,{display:'block',left:sel.x+'px',top:sel.y+'px',width:sel.w+'px',height:sel.h+'px'})}
+function clearSel(){sel=null;hasSel=false;selecting=false;drawSel()}
+function selectAll(){if(typing)commitText();tool='select';uiTools();sel={x:0,y:0,w:cv.width,h:cv.height};hasSel=true;drawSel()}
+function delSel(){if(tool!='select'||!hasSel||!sel.w||!sel.h)return;pushUndo();ctx.clearRect(sel.x,sel.y,sel.w,sel.h);clearSel()}
 
-// ── Tools ──────────────────────────────────────────────────────────────────
-btnPen.addEventListener('click',    () => selectTool('pen'));
-btnEraser.addEventListener('click', () => selectTool('eraser'));
-function selectTool(t) {
-  activeTool = t;
-  btnPen.classList.toggle('active',    t === 'pen');
-  btnEraser.classList.toggle('active', t === 'eraser');
-  mainCanvas.style.cursor = t === 'eraser' ? 'cell' : 'crosshair';
-}
+/* ---------- text ---------- */
+function fitTa(){const lines=(ta.value||' ').split('\n');ctx.save();ctx.font=size+'px Arial';const w=Math.max(...lines.map(l=>ctx.measureText(l).width));ctx.restore();
+ const W=Math.max(80,Math.ceil(w)+12),H=Math.max(20,Math.ceil(lines.length*size*1.15)+4);ta.style.width=W+'px';ta.style.height=H+'px';
+ ta.style.clipPath=`inset(-4px ${Math.max(0,W-(cv.width-tPt.x))}px ${Math.max(0,H-(cv.height-tPt.y))}px -4px)`}
+function beginText(p,init=''){typing=true;tPt=p;Object.assign(ta.style,{display:'block',left:p.x+'px',top:p.y+'px',color:color,fontSize:size+'px',lineHeight:size*1.15+'px'});
+ ta.value=init;fitTa();ta.focus();if(init)ta.select()}
+ta.oninput=fitTa;
+ta.onkeydown=e=>{e.stopPropagation();if(e.key=='Escape'||(e.key=='Enter'&&!e.shiftKey)){e.preventDefault();commitText()}};
+function commitText(){if(!typing)return;typing=false;const v=ta.value;ta.style.display='none';ta.value='';
+ if(v){pushUndo();ctx.save();ctx.font=size+'px Arial';ctx.textBaseline='top';ctx.fillStyle=color;v.split('\n').forEach((l,i)=>ctx.fillText(l,tPt.x,tPt.y+i*size*1.15));ctx.restore()}}
 
-// ── Brush size ─────────────────────────────────────────────────────────────
-brushSizeEl.addEventListener('change', () => {
-  brushSize = Math.max(1, Math.min(25, parseInt(brushSizeEl.value)||1));
-  brushSizeEl.value = brushSize;
-});
-document.getElementById('spin-up').addEventListener('click', () => { brushSize = Math.min(100,brushSize+1); brushSizeEl.value=brushSize; });
-document.getElementById('spin-dn').addEventListener('click', () => { brushSize = Math.max(1,brushSize-1);  brushSizeEl.value=brushSize; });
+/* ---------- clipboard ---------- */
+function cropCanvas(){const r=tool=='select'&&hasSel?sel:{x:0,y:0,w:cv.width,h:cv.height};if(r.w<=0||r.h<=0)return null;
+ const c=document.createElement('canvas');c.width=r.w;c.height=r.h;c.getContext('2d').drawImage(cv,r.x,r.y,r.w,r.h,0,0,r.w,r.h);return c}
+function copySel(){const c=cropCanvas();if(!c)return;try{c.toBlob(b=>navigator.clipboard.write([new ClipboardItem({'image/png':b})]).catch(()=>{}))}catch(e){}}
+async function pasteImage(blob){const bmp=await createImageBitmap(blob),t=document.createElement('canvas');t.width=bmp.width;t.height=bmp.height;
+ const x=t.getContext('2d');x.drawImage(bmp,0,0);const d=x.getImageData(0,0,t.width,t.height);for(let i=3;i<d.data.length;i+=4)d.data[i]=255;x.putImageData(d,0,0);
+ pushUndo();if(tool=='select'&&hasSel&&sel.w>0&&sel.h>0)ctx.drawImage(t,sel.x,sel.y,sel.w,sel.h);else ctx.drawImage(t,0,0)}
+function pasteText(s){if(typing)commitText();tool='text';uiTools();beginText({x:clamp(mouse.x,0,cv.width-1),y:clamp(mouse.y,0,cv.height-1)},s)}
+document.addEventListener('paste',e=>{if(e.target===ta||e.target.tagName=='INPUT')return;e.preventDefault();const cd=e.clipboardData,t=cd.getData('text');
+ if(t){pasteText(t);return}for(const it of cd.items)if(it.type.startsWith('image/')){pasteImage(it.getAsFile());return}});
+async function menuPaste(){try{for(const it of await navigator.clipboard.read()){if(it.types.includes('text/plain')){pasteText(await(await it.getType('text/plain')).text());return}
+ const t=it.types.find(x=>x.startsWith('image/'));if(t){pasteImage(await it.getType(t));return}}}catch(e){info('Paste','Your browser blocked clipboard access. Press Ctrl+V instead.')}}
 
-// ── Color ──────────────────────────────────────────────────────────────────
-colorBtn.addEventListener('click', () => colorInput.click());
-colorInput.addEventListener('input', () => {
-  brushColor = colorInput.value;
-  colorBtn.style.background = brushColor;
-  const r=parseInt(brushColor.slice(1,3),16), g=parseInt(brushColor.slice(3,5),16), b=parseInt(brushColor.slice(5,7),16);
-  colorBtn.style.color = (r*299+g*587+b*114)/1000 > 128 ? '#000' : '#fff';
-});
+/* ---------- keyboard ---------- */
+document.addEventListener('keydown',e=>{if(e.target.tagName=='INPUT'||e.target===ta)return;const k=e.key.toLowerCase();
+ if(e.ctrlKey&&k=='z'){e.preventDefault();undo()}else if(e.ctrlKey&&k=='y'){e.preventDefault();redo()}
+ else if(e.ctrlKey&&k=='c'){e.preventDefault();copySel()}else if(e.ctrlKey&&k=='a'){e.preventDefault();selectAll()}
+ else if((e.key=='Delete'||e.key=='Backspace')&&tool=='select'&&hasSel){e.preventDefault();delSel()}});
 
-// ── Canvas drawing ─────────────────────────────────────────────────────────
-mainCanvas.addEventListener('mousedown', e => {
-  if (e.button!==0 || !editCanvas) return;
-  isDrawing = true;
-  const p = pt(e);
-  lastX=p.x; lastY=p.y;
-  drawDab(p.x, p.y);
-});
-mainCanvas.addEventListener('mousemove', e => {
-  if (!editCanvas) return;
-  const p = pt(e);
-  statusPos.textContent = `Position: ${Math.floor(p.x)}, ${Math.floor(p.y)}`;
-  if (!isDrawing) return;
-  drawLine(lastX,lastY,p.x,p.y);
-  lastX=p.x; lastY=p.y;
-});
-mainCanvas.addEventListener('mouseup',    () => { isDrawing=false; });
-mainCanvas.addEventListener('mouseleave', () => { isDrawing=false; statusPos.textContent='Position: -, -'; });
+/* ---------- files ---------- */
+async function pipe(u8,S){return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new S('deflate-raw'))).arrayBuffer())}
+async function ftiBlob(){const w=cv.width,h=cv.height,d=ctx.getImageData(0,0,w,h).data,b=new Uint8Array(d.length);
+ for(let i=0;i<d.length;i+=4){b[i]=d[i+2];b[i+1]=d[i+1];b[i+2]=d[i];b[i+3]=d[i+3]}
+ const z=await pipe(b,CompressionStream),o=new Uint8Array(16+z.length),dv=new DataView(o.buffer);
+ o.set([70,84,73,49]);dv.setInt32(4,w,true);dv.setInt32(8,h,true);dv.setInt32(12,z.length,true);o.set(z,16);return new Blob([o])}
+async function loadFti(buf){const u=new Uint8Array(buf),dv=new DataView(buf);
+ if(u.length<16||u[0]!=70||u[1]!=84||u[2]!=73||u[3]!=49)throw new Error('This file is not a valid .FTI (Flat Transparency Image) file.');
+ const w=dv.getInt32(4,true),h=dv.getInt32(8,true),n=dv.getInt32(12,true),raw=await pipe(u.slice(16,16+n),DecompressionStream);
+ const d=new Uint8ClampedArray(w*h*4);for(let i=0;i<d.length&&i<raw.length;i+=4){d[i]=raw[i+2];d[i+1]=raw[i+1];d[i+2]=raw[i];d[i+3]=raw[i+3]}
+ cv.width=w;cv.height=h;ctx.putImageData(new ImageData(d,w,h),0,0)}
+function reset(label,fti){if(typing)commitText();clearSel();undoS=[];redoS=[];menuState();isFti=fti;items.save.style.display=fti?'':'none';setTitle(label)}
+function setTitle(l){document.title=l+' - FTI Studio Browser Port';$('#sFile').textContent=l;status()}
+function status(){$('#sSize').textContent=cv.width+' x '+cv.height+' px'}
+function openDlg(){$('#file').click()}
+$('#file').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)openFile(f)};
+async function openFile(f){try{const ext=f.name.split('.').pop().toLowerCase(),base=f.name.replace(/\.[^.]+$/,'');
+ if(ext=='fti'){await loadFti(await f.arrayBuffer());fh=null;name=base;reset(base,true)}
+ else if(ext=='png'){const b=await createImageBitmap(f);cv.width=b.width;cv.height=b.height;ctx.drawImage(b,0,0);fh=null;name='';reset(base+' (converted from PNG, unsaved)',false)}
+ else throw new Error('Unsupported file type.')}catch(err){info('Open','Could not open that file:\n'+err.message)}}
+addEventListener('dragover',e=>e.preventDefault());addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer.files[0])openFile(e.dataTransfer.files[0])});
+async function saveFti(as){try{const b=await ftiBlob();
+ if(window.showSaveFilePicker){if(as||!fh)fh=await showSaveFilePicker({suggestedName:(name||'untitled')+'.fti',types:[{description:'FTI Image',accept:{'application/octet-stream':['.fti']}}]});
+  const w=await fh.createWritable();await w.write(b);await w.close();name=fh.name.replace(/\.fti$/i,'')}
+ else{const n=(as||!name)?prompt('File name:',name||'untitled'):name;if(!n)return;name=n.replace(/\.fti$/i,'');const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name+'.fti';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1e3)}
+ isFti=true;items.save.style.display='';setTitle(name)}catch(e){if(e.name!='AbortError')info('Save','Could not save:\n'+e.message)}}
 
-// Touch
-mainCanvas.addEventListener('touchstart', e => {
-  e.preventDefault();
-  const t=e.touches[0], p=ptFromXY(t.clientX,t.clientY);
-  isDrawing=true; lastX=p.x; lastY=p.y; drawDab(p.x,p.y);
-},{passive:false});
-mainCanvas.addEventListener('touchmove', e => {
-  e.preventDefault();
-  if (!isDrawing) return;
-  const t=e.touches[0], p=ptFromXY(t.clientX,t.clientY);
-  drawLine(lastX,lastY,p.x,p.y); lastX=p.x; lastY=p.y;
-},{passive:false});
-mainCanvas.addEventListener('touchend', ()=>{ isDrawing=false; });
+/* ---------- canvas size ---------- */
+function sizeDlg(){const o=modal(`<h3>Canvas Size</h3><div>Width (px)&nbsp; <input id="cw" type="number" min="1" value="${cv.width}"></div><div style="margin:6px 0 8px">Height (px) <input id="ch" type="number" min="1" value="${cv.height}"></div><div id="er" style="color:#f44;margin-bottom:8px;min-height:1.6em"></div><button id="ok">Apply</button> <button id="cn">Cancel</button>`);
+ o.querySelector('#cn').onclick=()=>o.remove();
+ o.querySelector('#ok').onclick=()=>{let w=parseInt(o.querySelector('#cw').value),h=parseInt(o.querySelector('#ch').value);
+  if(!(w>0&&h>0))return;if(w>8000||h>8000){o.querySelector('#er').textContent='Maximum dimension is 8000 pixels';return}o.remove();
+  if(typing)commitText();pushUndo();const old=snap(),t=document.createElement('canvas');t.width=old.width;t.height=old.height;t.getContext('2d').putImageData(old,0,0);
+  cv.width=w;cv.height=h;ctx.drawImage(t,0,0);clearSel();status()}}
 
-function pt(e) { return ptFromXY(e.clientX, e.clientY); }
-function ptFromXY(cx,cy) { const r=mainCanvas.getBoundingClientRect(); return {x:cx-r.left, y:cy-r.top}; }
+/* ---------- dialogs ---------- */
+function modal(html,raw){const o=document.createElement('div');o.className='ov';o.innerHTML=raw?html:`<div class="dlg">${html}</div>`;document.body.append(o);
+ const k=e=>{if(e.key=='Escape'){o.remove();removeEventListener('keydown',k)}};addEventListener('keydown',k);return o}
+function info(t,s){const o=modal(`<h3>${t}</h3><pre></pre><button>Close</button>`);o.querySelector('pre').textContent=s;o.querySelector('button').onclick=()=>o.remove()}
 
-function drawDab(x,y) {
-  if(!editCtx) return;
-  editCtx.save();
-  setComposite(editCtx);
-  editCtx.beginPath();
-  editCtx.arc(x,y,brushSize/2,0,Math.PI*2);
-  editCtx.fill();
-  editCtx.restore();
-  redraw();
-}
-function drawLine(x0,y0,x1,y1) {
-  if(!editCtx) return;
-  editCtx.save();
-  editCtx.lineCap='round'; editCtx.lineJoin='round'; editCtx.lineWidth=brushSize;
-  setComposite(editCtx);
-  editCtx.beginPath(); editCtx.moveTo(x0,y0); editCtx.lineTo(x1,y1); editCtx.stroke();
-  editCtx.restore();
-  redraw();
-}
-function setComposite(c) {
-  if (activeTool==='eraser') {
-    c.globalCompositeOperation='destination-out';
-    c.fillStyle='rgba(0,0,0,1)'; c.strokeStyle='rgba(0,0,0,1)';
-  } else {
-    c.globalCompositeOperation='source-over';
-    c.fillStyle=brushColor; c.strokeStyle=brushColor;
-  }
-}
-function redraw() {
-  ctx.clearRect(0,0,mainCanvas.width,mainCanvas.height);
-  ctx.drawImage(editCanvas,0,0);
-}
+/* ---------- Windows-style colour dialog ---------- */
+const BASIC='FF8080 FFFF80 80FF80 00FF80 80FFFF 0080FF FF80C0 FF80FF FF0000 FFFF00 80FF00 00FF40 00FFFF 0080C0 8080C0 FF00FF 804040 FF8040 00FF00 008080 004080 8080FF 800040 FF0080 800000 FF8000 008000 008040 0000FF 0000A0 800080 8000FF 400000 804000 004000 004040 000080 000040 400040 400080 000000 808000 808040 808080 408080 C0C0C0 400040 FFFFFF'.split(' ');
+function h2r(h,s,l){const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q,f=t=>{t=(t%1+1)%1;return t<1/6?p+(q-p)*6*t:t<.5?q:t<2/3?p+(q-p)*(2/3-t)*6:p};return[f(h+1/3)*255,f(h)*255,f(h-1/3)*255].map(Math.round)}
+function r2h(r,g,b,hOld){r/=255;g/=255;b/=255;const M=Math.max(r,g,b),m=Math.min(r,g,b),l=(M+m)/2,d=M-m;if(!d)return[hOld,0,l];
+ const s=d/(1-Math.abs(2*l-1));let h=M==r?((g-b)/d)%6:M==g?(b-r)/d+2:(r-g)/d+4;return[((h/6)%1+1)%1,s,l]}
+const hex=(r,g,b)=>'#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+function colorDialog(init,cb){
+ const o=modal(`<div class="cd"><div class="l"><div>Basic colors:</div><div class="grid" id="bg"></div><div style="margin-top:14px">Custom colors:</div><div class="grid c" id="cg"></div>
+ <div class="rw" style="margin-top:auto"><button id="ok">OK</button><button id="cn">Cancel</button></div></div>
+ <div class="r"><div class="sp"><canvas id="sc" width="228" height="196"></canvas><canvas id="lc" width="14" height="196"></canvas><div id="ar"></div><i id="cx"></i></div>
+ <div style="display:flex;gap:8px;justify-content:space-between"><div><div class="pv" id="pv"></div><div style="font-size:11px;margin-top:2px">Color|Solid</div></div>
+ <div class="in"><span>Hue:</span><input id="H"><span>Red:</span><input id="R"><span>Sat:</span><input id="S"><span>Green:</span><input id="G"><span>Lum:</span><input id="L"><span>Blue:</span><input id="B"></div></div>
+ <button id="ad" style="margin-top:2px">Add to Custom Colors</button></div></div>`,true);
+ const $o=s=>o.querySelector(s);let n=parseInt(init.slice(1),16),R=n>>16&255,G=n>>8&255,B=n&255,[hf,sf,lf]=r2h(R,G,B,0);
+ const bg=$o('#bg'),cg=$o('#cg');
+let selC=-1;
+ const setRGB=h=>{const v=parseInt(h.replace('#',''),16);R=v>>16;G=v>>8&255;B=v&255;[hf,sf,lf]=r2h(R,G,B,hf);upd()},mark=(b,i)=>{o.querySelectorAll('.grid b').forEach(x=>x.classList.remove('s'));b.classList.add('s');selC=i==null?-1:i};
+ BASIC.forEach(c=>{const b=document.createElement('b');b.style.background='#'+c;b.onclick=()=>{setRGB(c);mark(b)};bg.append(b)});
+ const changed=()=>{if(selC>=0){customCols[selC]=hex(R,G,B);fillCustom(selC)}},fillCustom=i=>{const b=cg.children[i];b.style.background=customCols[i];b.classList.add('f')};
+ for(let i=0;i<16;i++){const b=document.createElement('b');b.onclick=()=>{setRGB(customCols[i]||'#ffffff');mark(b,i)};cg.append(b);if(customCols[i])fillCustom(i)}
 
-// ── New blank canvas ───────────────────────────────────────────────────────
-function newBlankCanvas(w,h) {
-  editCanvas=document.createElement('canvas'); editCanvas.width=w; editCanvas.height=h;
-  editCtx=editCanvas.getContext('2d');
-  mainCanvas.width=w; mainCanvas.height=h;
-  ctx.clearRect(0,0,w,h);
-  sizeWrap(w,h);
-  currentFtiPath=null;
-  updateStatus('Browser Port');
-}
-function sizeWrap(w,h) {
-  canvasWrap.style.width=w+'px'; canvasWrap.style.height=h+'px';
-}
+ const sc=$o('#sc'),sx=sc.getContext('2d'),id=sx.createImageData(228,196);
+ for(let y=0;y<196;y++)for(let x=0;x<228;x++){const c=h2r(x/228,1-y/196,.5),i=(y*228+x)*4;id.data.set([c[0],c[1],c[2],255],i)}sx.putImageData(id,0,0);
+ const lc=$o('#lc'),lx=lc.getContext('2d');
+ function upd(){const v={H:Math.min(239,Math.round(hf*240)),S:Math.round(sf*240),L:Math.round(lf*240),R,G,B};for(const k in v)$o('#'+k).value=v[k];
+  $o('#pv').style.background=hex(R,G,B);const mid=h2r(hf,sf,.5);
+  for(let y=0;y<196;y++){const c=h2r(hf,sf,1-y/195);lx.fillStyle=hex(...c);lx.fillRect(0,y,14,1)}
+  $o('#cx').style.left=hf*228+1+'px';$o('#cx').style.top=(1-sf)*196+1+'px';$o('#ar').style.top=(1-lf)*195+1+'px'}
+ function fromHSL(){[R,G,B]=h2r(hf,sf,lf);upd();changed()}
+ const drag=(el,fn)=>{let vx,vy,r,on=0;
+  el.onpointerdown=e=>{r=el.getBoundingClientRect();vx=e.clientX-r.left;vy=e.clientY-r.top;on=1;fn(e);
+   try{el.setPointerCapture(e.pointerId);const p=el.requestPointerLock();if(p&&p.catch)p.catch(()=>{})}catch(x){}};
+  el.onpointermove=e=>{if(!on)return;
+   if(document.pointerLockElement===el){vx=clamp(vx+e.movementX,0,r.width);vy=clamp(vy+e.movementY,0,r.height);fn({clientX:r.left+vx,clientY:r.top+vy})}
+   else if(el.hasPointerCapture(e.pointerId))fn(e)};
+  el.onpointerup=el.onpointercancel=()=>{on=0;if(document.pointerLockElement===el)document.exitPointerLock()}};
+ drag(sc,e=>{const r=sc.getBoundingClientRect();hf=clamp((e.clientX-r.left-r.width/230)/(r.width*228/230),0,.9999);sf=clamp(1-(e.clientY-r.top-r.height/198)/(r.height*196/198),0,1);fromHSL()});
+ drag(lc,e=>{const r=lc.getBoundingClientRect();lf=clamp(1-(e.clientY-r.top-r.height/198)/(r.height*195/198),0,1);fromHSL()});
+ ['R','G','B'].forEach(k=>$o('#'+k).onchange=()=>{R=clamp(+$o('#R').value||0,0,255);G=clamp(+$o('#G').value||0,0,255);B=clamp(+$o('#B').value||0,0,255);[hf,sf,lf]=r2h(R,G,B,hf);upd();changed()});
+ ['H','S','L'].forEach(k=>$o('#'+k).onchange=()=>{hf=clamp((+$o('#H').value||0)/240,0,.9999);sf=clamp((+$o('#S').value||0)/240,0,1);lf=clamp((+$o('#L').value||0)/240,0,1);fromHSL()});
+ $o('#ad').onclick=()=>{let i=selC;if(i<0){i=0;while(i<16&&customCols[i])i++;if(i>15)i=0}customCols[i]=hex(R,G,B);fillCustom(i);mark(cg.children[i],i)};
+ $o('#ok').onclick=()=>{o.remove();cb(hex(R,G,B))};$o('#cn').onclick=()=>o.remove();upd();
+ const cd=$o('.cd'),fit=()=>{cd.style.transform='none';const k=Math.min(1,(innerWidth-16)/cd.offsetWidth,(innerHeight-16)/cd.offsetHeight);cd.style.transform='scale('+k+')'};fit();addEventListener('resize',fit)}
 
-// ── FTI format ─────────────────────────────────────────────────────────────
-// Magic: F T I 1  → bytes 70 84 73 49
-function encodeFti(canvas) {
-  const w=canvas.width, h=canvas.height;
-  const src=canvas.getContext('2d').getImageData(0,0,w,h).data;
-  const raw=new Uint8Array(w*h*4);
-  for(let i=0;i<w*h;i++){
-    raw[i*4+0]=src[i*4+2]; // B
-    raw[i*4+1]=src[i*4+1]; // G
-    raw[i*4+2]=src[i*4+0]; // R
-    raw[i*4+3]=src[i*4+3]; // A
-  }
-  return new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw')))
-    .arrayBuffer().then(comp=>{
-      comp=new Uint8Array(comp);
-      const buf=new Uint8Array(16+comp.length);
-      const dv=new DataView(buf.buffer);
-      buf[0]=70;buf[1]=84;buf[2]=73;buf[3]=49;
-      dv.setInt32(4,w,true); dv.setInt32(8,h,true); dv.setInt32(12,comp.length,true);
-      buf.set(comp,16);
-      return buf.buffer;
-    });
-}
-function decodeFti(ab) {
-  const dv=new DataView(ab);
-  if(dv.getUint8(0)!==70||dv.getUint8(1)!==84||dv.getUint8(2)!==73||dv.getUint8(3)!==49)
-    throw new Error('This file is not a valid .FTI (Flat Transparency Image) file.');
-  const w=dv.getInt32(4,true), h=dv.getInt32(8,true), cl=dv.getInt32(12,true);
-  const comp=new Uint8Array(ab,16,cl);
-  return new Response(new Blob([comp]).stream().pipeThrough(new DecompressionStream('deflate-raw')))
-    .arrayBuffer().then(raw=>{
-      raw=new Uint8Array(raw);
-      const oc=document.createElement('canvas'); oc.width=w; oc.height=h;
-      const octx=oc.getContext('2d');
-      const id=octx.createImageData(w,h); const dst=id.data;
-      for(let i=0;i<w*h;i++){
-        dst[i*4+0]=raw[i*4+2]; dst[i*4+1]=raw[i*4+1];
-        dst[i*4+2]=raw[i*4+0]; dst[i*4+3]=raw[i*4+3];
-      }
-      octx.putImageData(id,0,0);
-      return oc;
-    });
-}
-function downloadFti(fname) {
-  if(!editCanvas) return;
-  encodeFti(editCanvas).then(ab=>{
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([ab],{type:'application/octet-stream'}));
-    a.download=fname; a.click(); URL.revokeObjectURL(a.href);
-  }).catch(err=>showAlert('Save','Could not save:\n'+err.message));
-}
-
-// ── Canvas Size dialog ─────────────────────────────────────────────────────
-function showCanvasSizeDialog() {
-  if(!editCanvas) return;
-  document.getElementById('cs-width').value=editCanvas.width;
-  document.getElementById('cs-height').value=editCanvas.height;
-  showModal('modal-canvas-size');
-}
-document.getElementById('cs-apply').addEventListener('click',()=>{
-  const w=parseInt(document.getElementById('cs-width').value)||0;
-  const h=parseInt(document.getElementById('cs-height').value)||0;
-  if(w>8000||h>8000){ hideModal(); showAlert('Canvas Size','Maximum dimension is 8000 pixels.'); return; }
-  if(w<1||h<1){ hideModal(); return; }
-  resizeCanvas(w,h); hideModal();
-});
-document.getElementById('cs-cancel').addEventListener('click', hideModal);
-function resizeCanvas(nw,nh) {
-  const nc=document.createElement('canvas'); nc.width=nw; nc.height=nh;
-  const nctx=nc.getContext('2d'); nctx.drawImage(editCanvas,0,0);
-  editCanvas=nc; editCtx=nctx;
-  mainCanvas.width=nw; mainCanvas.height=nh; redraw(); sizeWrap(nw,nh);
-  updateStatus(currentFtiPath?currentFtiPath.replace(/\.fti$/i,''):'Untitled');
-}
-
-// ── What is FTI ────────────────────────────────────────────────────────────
-function showWhatIsFti() { showModal('modal-fti-info'); }
-document.getElementById('fti-close').addEventListener('click', hideModal);
-
-// ── Alert ──────────────────────────────────────────────────────────────────
-function showAlert(title,msg) {
-  document.getElementById('alert-title').textContent=title;
-  document.getElementById('alert-msg').textContent=msg;
-  showModal('modal-alert');
-}
-document.getElementById('alert-ok').addEventListener('click', hideModal);
-
-// ── Modal helpers ──────────────────────────────────────────────────────────
-let activeModal=null;
-function showModal(id) {
-  if(activeModal) activeModal.style.display='none';
-  activeModal=document.getElementById(id);
-  activeModal.style.display='block';
-  overlay.classList.add('show');
-}
-function hideModal() {
-  if(activeModal) activeModal.style.display='none';
-  overlay.classList.remove('show'); activeModal=null;
-}
-overlay.addEventListener('click',e=>{ if(e.target===overlay) hideModal(); });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') hideModal(); });
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-function updateStatus(label) {
-  document.title=label+' - FTI Studio';
-  statusFile.textContent=label;
-  if(editCanvas) statusSize.textContent=`${editCanvas.width} x ${editCanvas.height} px`;
-}
-
-// ── Drag & drop FTI/PNG onto canvas ───────────────────────────────────────
-canvasHost.addEventListener('dragover',e=>e.preventDefault());
-canvasHost.addEventListener('drop',e=>{
-  e.preventDefault();
-  const file=e.dataTransfer.files[0]; if(!file) return;
-  const ext=file.name.toLowerCase().split('.').pop();
-  if(ext==='fti'){
-    const reader=new FileReader();
-    reader.onload=ev=>{
-      decodeFti(ev.target.result).then(oc=>{
-        editCanvas=oc; editCtx=oc.getContext('2d');
-        mainCanvas.width=oc.width; mainCanvas.height=oc.height;
-        redraw(); sizeWrap(oc.width,oc.height);
-        currentFtiPath=file.name;
-        updateStatus(file.name.replace(/\.fti$/i,''));
-      }).catch(err=>showAlert('Open .FTI','Could not open that .FTI file:\n'+err.message));
-    };
-    reader.readAsArrayBuffer(file);
-}
-});
-
-// ── Boot ───────────────────────────────────────────────────────────────────
-newBlankCanvas(800, 600);
-</script>
-</body>
-</html>
+/* ---------- init ---------- */
+setColor(color);uiTools();status();
+</script></body></html>
